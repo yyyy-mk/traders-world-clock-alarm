@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⏰ (트레이더용) 세계시간 알람 & 타이머 (alpha Ver 0.3) </title>
+    <title>⏰ (트레이더용) 세계시간 알람 & 타이머 (Ver 0.4 - 수정판) </title>
     <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
     <style>
 
@@ -179,14 +179,29 @@
         }
 
         function addAlarm() {
+            const name = document.getElementById('alarmName').value.trim();
+            if (!name) { alert('알람 이름을 입력하세요!'); return; }
             const d = []; for(let i=0; i<7; i++) if(document.getElementById('day'+i).checked) d.push(i);
-            alarms.push({ id: Date.now(), tz: document.getElementById('alarmTimezone').value, hour: parseInt(document.getElementById('alarmHour').value), minute: parseInt(document.getElementById('alarmMinute').value), name: document.getElementById('alarmName').value || '알람', days: d });
-            saveData(); renderAlarms();
+            if (d.length === 0) { alert('최소 하나의 요일을 선택하세요!'); return; }
+            alarms.push({ id: Date.now(), tz: document.getElementById('alarmTimezone').value, hour: parseInt(document.getElementById('alarmHour').value), minute: parseInt(document.getElementById('alarmMinute').value), name: name, days: d });
+            saveData(); renderAlarms(); alert(`"${name}" 알람이 추가되었습니다!`);
         }
 
         function renderAlarms() {
             const l = document.getElementById('alarmList');
-            l.innerHTML = alarms.map(a => `<div class="alarm-item"><div><b>${a.name}</b><br><small>${a.tz} ${a.hour}:${a.minute}</small></div><button class="btn btn-danger" onclick="deleteAlarm(${a.id})">삭제</button></div>`).join('');
+            if (alarms.length === 0) {
+                l.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">등록된 알람이 없습니다.<br>위에서 알람을 추가하거나 프리셋을 선택하세요.</div>';
+                return;
+            }
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+            l.innerHTML = alarms.map(a => {
+                const dt = DateTime.now().setZone(a.tz).set({ hour: a.hour, minute: a.minute });
+                const koreaTime = dt.setZone('Asia/Seoul');
+                const daysStr = a.days.length === 7 ? '매일' : 
+                               a.days.length === 5 && a.days.every(d => d >= 1 && d <= 5) ? '평일' :
+                               a.days.map(d => dayNames[d]).join(', ');
+                return `<div class="alarm-item"><div><b>${a.name}</b><br><small>${a.tz} ${String(a.hour).padStart(2,'0')}:${String(a.minute).padStart(2,'0')} → 한국 ${koreaTime.toFormat('HH:mm')} | ${daysStr}</small></div><button class="btn btn-danger" onclick="deleteAlarm(${a.id})">삭제</button></div>`;
+            }).join('');
         }
 
         function deleteAlarm(id) { alarms = alarms.filter(a => a.id !== id); saveData(); renderAlarms(); }
@@ -232,7 +247,16 @@
 
         function renderTimers() {
             const l = document.getElementById('timerList');
-            l.innerHTML = timers.map(t => `<div class="alarm-item">남은 시간: ${Math.ceil((t.end - Date.now())/1000)}초</div>`).join('');
+            if (timers.length === 0) {
+                l.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">실행 중인 타이머가 없습니다.</div>';
+                return;
+            }
+            l.innerHTML = timers.map(t => {
+                const remaining = Math.ceil((t.end - Date.now())/1000);
+                const min = Math.floor(remaining / 60);
+                const sec = remaining % 60;
+                return `<div class="alarm-item"><b>남은 시간: ${min}:${String(sec).padStart(2,'0')}</b></div>`;
+            }).join('');
         }
 
         function switchTab(t) {
