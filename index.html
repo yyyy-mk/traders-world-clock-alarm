@@ -3,43 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⏰ 세계시간 알람 & 타이머 for Traders </title>
+    <title>⏰ (트레이더용) 세계시간 알람 & 타이머 </title>
     <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
     <style>
-        /* [기존 스타일 100% 유지 및 보강] */
+        /* [스타일 유지] */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; }
         .header { text-align: center; color: white; margin-bottom: 30px; }
-        .header h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
         .current-time { background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; backdrop-filter: blur(10px); color: white; font-size: 1.1em; margin-bottom: 20px; text-align: center; }
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-button { flex: 1; padding: 15px; background: rgba(255,255,255,0.2); border: none; color: white; font-size: 1.1em; cursor: pointer; border-radius: 10px; transition: all 0.3s; backdrop-filter: blur(10px); }
+        .tab-button { flex: 1; padding: 15px; background: rgba(255,255,255,0.2); border: none; color: white; cursor: pointer; border-radius: 10px; transition: all 0.3s; }
         .tab-button.active { background: white; color: #667eea; font-weight: bold; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .card { background: white; border-radius: 15px; padding: 25px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .card h2 { color: #667eea; margin-bottom: 20px; font-size: 1.5em; }
         .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
-        .form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; }
         .time-input { display: flex; gap: 10px; align-items: center; }
         .time-input input { width: 80px; text-align: center; }
         .days-selector { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
         .day-checkbox { display: none; }
-        .day-label { padding: 10px 20px; background: #f0f0f0; border-radius: 8px; cursor: pointer; user-select: none; }
+        .day-label { padding: 10px 20px; background: #f0f0f0; border-radius: 8px; cursor: pointer; }
         .day-checkbox:checked + .day-label { background: #667eea; color: white; }
-        .preset-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 15px; }
-        .timer-controls { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 15px; }
-        .btn { padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold; transition: all 0.3s; }
+        .preset-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 15px; }
+        .btn { padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
         .btn-primary { background: #667eea; color: white; }
-        .btn-secondary { background: #f0f0f0; color: #333; font-size: 0.9em; padding: 8px 16px; }
+        .btn-secondary { background: #f0f0f0; color: #333; font-size: 0.85em; padding: 10px; }
         .btn-danger { background: #ff6b6b; color: white; }
         .alarm-item { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         #permissionCard { padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center; }
-        .status-warning { background: #fff3cd; border: 2px solid #ffc107; color: #856404; }
-        .status-ready { background: #e3f2fd; border: 2px solid #2196f3; color: #0d47a1; }
-        @media (max-width: 768px) { .timer-controls { grid-template-columns: repeat(3, 1fr); } }
+        .status-warning { background: #fff3cd; border: 2px solid #ffc107; }
+        .status-ready { background: #e3f2fd; border: 2px solid #2196f3; }
     </style>
 </head>
 <body>
@@ -63,7 +59,7 @@
                 <div class="form-group">
                     <label>타임존</label>
                     <select id="alarmTimezone" onchange="updateKoreaPreview()">
-                        <option value="America/New_York">US/Eastern (뉴욕) - 미장</option>
+                        <option value="America/New_York">US/Eastern (뉴욕)</option>
                         <option value="Asia/Seoul" selected>Asia/Seoul (서울)</option>
                         <option value="Asia/Hong_Kong">Asia/Hong_Kong (홍콩)</option>
                         <option value="Europe/London">Europe/London (런던)</option>
@@ -98,10 +94,16 @@
             <div class="card">
                 <h2>⚡ 빠른 설정 (프리셋)</h2>
                 <div class="preset-grid">
-                    <button class="btn btn-secondary" onclick="addPresetAlarm('America/New_York', 4, 0, '미장 프리마켓')">미장 프리 (04:00)</button>
+                    <button class="btn btn-secondary" onclick="addPresetAlarm('America/New_York', 4, 0, '미장 프리마켓')">미장 프리마켓 (04:00)</button>
                     <button class="btn btn-secondary" onclick="addPresetAlarm('America/New_York', 9, 30, '미장 개장')">미장 개장 (09:30)</button>
-                    <button class="btn btn-secondary" onclick="addPresetAlarm('Asia/Hong_Kong', 9, 30, '홍콩 오전장')">홍콩 오전 (09:30)</button>
-                    <button class="btn btn-secondary" onclick="addPresetAlarm('Asia/Hong_Kong', 17, 15, '홍콩 야간선물')">홍콩 야간 (17:15)</button>
+                    <button class="btn btn-secondary" onclick="addPresetAlarm('America/New_York', 16, 0, '미장 마감')">미장 마감 (16:00)</button>
+                    <button class="btn btn-secondary" onclick="addPresetAlarm('Europe/London', 8, 0, '런던 개장')">런던 개장 (08:00)</button>
+                    <button class="btn btn-secondary" onclick="addPresetAlarm('Asia/Hong_Kong', 9, 30, '홍콩 오전장')">홍콩 오전장 (09:30)</button>
+                    <button class="btn btn-secondary" onclick="addPresetAlarm('Asia/Hong_Kong', 12, 0, '홍콩 점심시간')">홍콩 점심시간 (12:00)</button>
+                    <button class="btn btn-secondary" onclick="addPresetAlarm('Asia/Hong_Kong', 13, 0, '홍콩 오후장')">홍콩 오후장 (13:00)</button>
+                    <button class="btn btn-secondary" onclick="addPresetAlarm('Asia/Hong_Kong', 16, 0, '홍콩 정규장 마감')">홍콩 정규장 마감 (16:00)</button>
+                    <button class="btn btn-secondary" onclick="addPresetAlarm('Asia/Hong_Kong', 17, 15, '홍콩 야간선물')">홍콩 야간선물 (17:15)</button>
+                    <button class="btn btn-secondary" onclick="addPresetAlarm('Asia/Hong_Kong', 1, 0, '홍콩 야간 마감')">홍콩 야간 마감 (01:00)</button>
                 </div>
             </div>
 
@@ -117,19 +119,8 @@
                 <h2>⏱️ 타이머 설정</h2>
                 <div class="form-group">
                     <div class="time-input">
-                        <input type="number" id="timerHour" value="0"> 시
-                        <input type="number" id="timerMin" value="5"> 분
+                        <input type="number" id="timerMin" value="5"> 분 
                         <input type="number" id="timerSec" value="0"> 초
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>빠른 설정</label>
-                    <div class="timer-controls">
-                        <button class="btn btn-secondary" onclick="setTimer(0,1,0)">1분</button>
-                        <button class="btn btn-secondary" onclick="setTimer(0,5,0)">5분</button>
-                        <button class="btn btn-secondary" onclick="setTimer(0,15,0)">15분</button>
-                        <button class="btn btn-secondary" onclick="setTimer(0,30,0)">30분</button>
-                        <button class="btn btn-secondary" onclick="setTimer(1,0,0)">1시간</button>
                     </div>
                 </div>
                 <button class="btn btn-primary" onclick="addTimer()" style="width: 100%;">▶ 타이머 시작</button>
@@ -146,12 +137,13 @@
 
         function init() {
             loadAlarms(); updateCurrentTime(); setInterval(updateCurrentTime, 1000);
-            setInterval(checkLoop, 1000); updateKoreaPreview(); checkPermStatus();
+            setInterval(checkLoop, 1000); updateKoreaPreview(); checkPerm();
         }
 
-        function checkPermStatus() {
+        function checkPerm() {
             if (Notification.permission === 'granted') {
-                document.getElementById('permissionCard').className = 'status-ready';
+                const c = document.getElementById('permissionCard');
+                c.className = 'status-ready';
                 document.getElementById('statusText').innerHTML = '<b>✅ 준비됨</b><br>알람 엔진을 시작해주세요.';
             }
         }
@@ -178,19 +170,12 @@
             document.getElementById('koreaPreview').textContent = `→ 한국: ${t.setZone('Asia/Seoul').toFormat('HH:mm')}`;
         }
 
-        // [프리셋 로직 복구]
-        function setWeekdays() { for (let i = 0; i < 7; i++) { document.getElementById('day' + i).checked = (i >= 1 && i <= 5); } }
-        function setAllDays() { for (let i = 0; i < 7; i++) { document.getElementById('day' + i).checked = true; } }
-        
-        function addPresetAlarm(timezone, hour, minute, name) {
-            alarms.push({ id: Date.now(), tz: timezone, hour, minute, name, days: [1,2,3,4,5] });
-            saveData(); renderAlarms(); alert(`"${name}" 추가 완료!`);
-        }
+        function setWeekdays() { for(let i=0; i<7; i++) document.getElementById('day'+i).checked = (i>=1 && i<=5); }
+        function setAllDays() { for(let i=0; i<7; i++) document.getElementById('day'+i).checked = true; }
 
-        function setTimer(h, m, s) { 
-            document.getElementById('timerHour').value = h;
-            document.getElementById('timerMin').value = m;
-            document.getElementById('timerSec').value = s;
+        function addPresetAlarm(tz, h, m, name) {
+            alarms.push({ id: Date.now(), tz, hour: h, minute: m, name, days: [1,2,3,4,5] });
+            saveData(); renderAlarms(); alert(`"${name}" 추가 완료!`);
         }
 
         function addAlarm() {
@@ -209,12 +194,14 @@
 
         function checkLoop() {
             const n = DateTime.now(); const d = n.weekday % 7;
+            const s = n.setZone('Asia/Seoul').toFormat('HH:mm:ss');
             alarms.forEach(a => {
                 const akr = DateTime.now().setZone(a.tz).set({hour: a.hour, minute: a.minute, second: 0}).setZone('Asia/Seoul').toFormat('HH:mm:ss');
-                if (a.days.includes(d) && n.setZone('Asia/Seoul').toFormat('HH:mm:ss') === akr) trigger(a.name);
+                if (a.days.includes(d) && s === akr) trigger(a.name);
             });
             timers.forEach(t => { if (t.end <= Date.now() && !t.done) { t.done = true; trigger('타이머 종료'); } });
-            timers = timers.filter(t => !t.done); renderTimers();
+            timers = timers.filter(t => !t.done);
+            renderTimers();
         }
 
         function trigger(t) {
@@ -223,24 +210,24 @@
             if (Notification.permission === 'granted') {
                 navigator.serviceWorker.ready.then(r => r.showNotification('⏰ ' + t, { body: '시간입니다!', tag: 'alarm' }));
             }
-            setTimeout(() => { alert('⏰ ' + t); }, 100);
+            // 소리 밀림 방지용 지연
+            setTimeout(() => { alert('⏰ 알람: ' + t); }, 100);
         }
 
         function playBeep(s = false) {
             try {
-                const c = new (window.AudioContext || window.webkitAudioContext)();
-                const o = c.createOscillator(); const g = c.createGain();
-                o.connect(g); g.connect(c.destination);
-                g.gain.setValueAtTime(s ? 0 : 0.5, c.currentTime);
-                o.start(); o.stop(c.currentTime + 1.5);
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const o = ctx.createOscillator(); const g = ctx.createGain();
+                o.connect(g); g.connect(ctx.destination);
+                g.gain.setValueAtTime(s ? 0 : 0.5, ctx.currentTime);
+                o.start(); o.stop(ctx.currentTime + 1.5);
             } catch(e) {}
         }
 
         function addTimer() {
-            const h = parseInt(document.getElementById('timerHour').value) || 0;
-            const m = parseInt(document.getElementById('timerMin').value) || 0;
-            const s = parseInt(document.getElementById('timerSec').value) || 0;
-            timers.push({ end: Date.now() + (h*3600 + m*60 + s)*1000, done: false });
+            const m = parseInt(document.getElementById('timerMin').value);
+            const s = parseInt(document.getElementById('timerSec').value);
+            timers.push({ end: Date.now() + (m*60+s)*1000, done: false });
         }
 
         function renderTimers() {
@@ -253,8 +240,8 @@
             document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id.includes(t)));
         }
 
-        function saveData() { localStorage.setItem('world_alarms_final', JSON.stringify(alarms)); }
-        function loadAlarms() { const s = localStorage.getItem('world_alarms_final'); if(s) { alarms = JSON.parse(s); renderAlarms(); } }
+        function saveData() { localStorage.setItem('world_alarms_v2', JSON.stringify(alarms)); }
+        function loadAlarms() { const s = localStorage.getItem('world_alarms_v2'); if(s) { alarms = JSON.parse(s); renderAlarms(); } }
         window.onload = init;
     </script>
 </body>
