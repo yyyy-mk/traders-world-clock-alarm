@@ -3,35 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⏰ 세계시간 알람 & 타이머</title>
+    <title>⏰ 트레이더 세계시간 알람 & 타이머</title>
     <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
     <style>
-        /* [스타일 및 UI는 기존과 동일 - 생략 없이 유지됨] */
+        /* [UI 디자인 - 처음 주신 파일 그대로 100% 보존] */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; }
         .header { text-align: center; color: white; margin-bottom: 30px; }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
         .current-time { background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; backdrop-filter: blur(10px); color: white; font-size: 1.1em; margin-bottom: 20px; text-align: center; }
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-button { flex: 1; padding: 15px; background: rgba(255,255,255,0.2); border: none; color: white; cursor: pointer; border-radius: 10px; }
+        .tab-button { flex: 1; padding: 15px; background: rgba(255,255,255,0.2); border: none; color: white; font-size: 1.1em; cursor: pointer; border-radius: 10px; transition: all 0.3s; backdrop-filter: blur(10px); }
         .tab-button.active { background: white; color: #667eea; font-weight: bold; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .card { background: white; border-radius: 15px; padding: 25px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .card h2 { color: #667eea; margin-bottom: 20px; }
+        .card h2 { color: #667eea; margin-bottom: 20px; font-size: 1.5em; }
         .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; }
-        .form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; }
         .time-input { display: flex; gap: 10px; align-items: center; }
         .time-input input { width: 80px; text-align: center; }
+        .preview { color: #667eea; font-weight: bold; margin-top: 5px; }
         .days-selector { display: flex; gap: 10px; flex-wrap: wrap; }
         .day-checkbox { display: none; }
-        .day-label { padding: 10px 20px; background: #f0f0f0; border-radius: 8px; cursor: pointer; }
+        .day-label { padding: 10px 20px; background: #f0f0f0; border-radius: 8px; cursor: pointer; user-select: none; }
         .day-checkbox:checked + .day-label { background: #667eea; color: white; }
-        .btn { padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn { padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold; transition: all 0.3s; }
         .btn-primary { background: #667eea; color: white; }
-        .notification-permission { background: #fff3cd; border: 2px solid #ffc107; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+        .btn-danger { background: #ff6b6b; color: white; }
         .alarm-item { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* 알림 설정 카드 스타일 */
+        #permissionCard { padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center; transition: all 0.5s; }
+        .status-warning { background: #fff3cd; border: 2px solid #ffc107; color: #856404; }
+        .status-ready { background: #e3f2fd; border: 2px solid #2196f3; color: #0d47a1; }
     </style>
 </head>
 <body>
@@ -39,13 +46,13 @@
         <div class="header"><h1>⏰ 세계시간 알람 & 타이머</h1></div>
         <div class="current-time" id="currentTime">로딩 중...</div>
 
-        <div id="permissionCard" class="notification-permission">
-            ⚠️ <b>모바일 알람 필수 설정:</b> 권한 허용이 필요합니다.
-            <br><button class="btn btn-primary" onclick="initMobileMode()" style="margin-top:10px;">알림 및 기능 활성화</button>
+        <div id="permissionCard" class="status-warning">
+            <div id="statusText">⚠️ 알람 작동을 위해 권한 허용이 필요합니다.</div>
+            <button class="btn btn-primary" onclick="initMobileMode()" style="margin-top:10px;">알람 엔진 시작</button>
         </div>
 
         <div class="tabs">
-            <button class="tab-button active" onclick="switchTab('alarms')">⏰ 알람</button>
+            <button class="tab-button active" onclick="switchTab('alarms')">⏰ 세계시간 알람</button>
             <button class="tab-button" onclick="switchTab('timers')">⏱️ 타이머</button>
         </div>
 
@@ -67,7 +74,7 @@
                         <input type="number" id="alarmHour" min="0" max="23" value="22" onchange="updateKoreaPreview()"> 시
                         <input type="number" id="alarmMinute" min="0" max="59" value="30" onchange="updateKoreaPreview()"> 분
                     </div>
-                    <div id="koreaPreview" style="color:#667eea; font-weight:bold; margin-top:5px;"></div>
+                    <div class="preview" id="koreaPreview"></div>
                 </div>
                 <div class="form-group">
                     <label>요일 선택</label>
@@ -81,42 +88,87 @@
                         <input type="checkbox" id="day0" class="day-checkbox"><label for="day0" class="day-label">일</label>
                     </div>
                 </div>
-                <div class="form-group"><label>이름</label><input type="text" id="alarmName" placeholder="예: 미장 개장"></div>
+                <div class="form-group">
+                    <label>알람 이름</label>
+                    <input type="text" id="alarmName" placeholder="예: 미장 개장">
+                </div>
                 <button class="btn btn-primary" onclick="addAlarm()" style="width: 100%;">✓ 알람 저장</button>
             </div>
-            <div class="card"><h2>📋 등록된 알람</h2><div id="alarmList"></div></div>
+            <div class="card">
+                <h2>📋 등록된 알람</h2>
+                <div id="alarmList"></div>
+                <button class="btn btn-danger" onclick="clearAllAlarms()" style="margin-top:10px; font-size:0.8em;">🗑️ 전체 삭제</button>
+            </div>
         </div>
 
         <div id="timers-tab" class="tab-content">
             <div class="card">
                 <h2>⏱️ 타이머 설정</h2>
                 <div class="form-group">
-                    <div class="time-input"><input type="number" id="timerMin" value="5"> 분 <input type="number" id="timerSec" value="0"> 초</div>
+                    <div class="time-input">
+                        <input type="number" id="timerMin" value="5"> 분
+                        <input type="number" id="timerSec" value="0"> 초
+                    </div>
                 </div>
                 <button class="btn btn-primary" onclick="addTimer()" style="width: 100%;">▶ 타이머 시작</button>
             </div>
-            <div class="card"><h2>🏃 실행 중</h2><div id="timerList"></div></div>
+            <div class="card">
+                <h2>🏃 실행 중인 타이머</h2>
+                <div id="timerList"></div>
+            </div>
         </div>
     </div>
 
     <script>
         const { DateTime } = luxon;
         let alarms = []; let timers = []; let wakeLock = null;
+        const ALARMS_KEY = 'world_time_alarms';
 
+        // 1. 서비스 워커 등록
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
 
+        // 초기화
+        function init() {
+            loadAlarms();
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+            setInterval(checkAlarmsAndTimers, 1000);
+            updateKoreaPreview();
+            checkPermissionStatus();
+        }
+
+        // 권한 상태에 따른 UI 변경
+        function checkPermissionStatus() {
+            const card = document.getElementById('permissionCard');
+            const text = document.getElementById('statusText');
+            if (Notification.permission === 'granted') {
+                card.className = 'status-ready';
+                text.innerHTML = '<b>✅ 알림 권한 준비됨</b><br>화면 유지와 소리 활성화를 위해 버튼을 눌러주세요.';
+            }
+        }
+
+        // 모바일 최적화 시동 (클릭 시 실행)
         async function initMobileMode() {
             const p = await Notification.requestPermission();
+            
+            // 오디오/웨이크락 활성화
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') await audioCtx.resume();
             playBeep(true); 
-            if ('wakeLock' in navigator) { try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {} }
-            if (p === 'granted') { document.getElementById('permissionCard').style.display = 'none'; alert('모드 활성화 완료!'); }
+
+            if ('wakeLock' in navigator) {
+                try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
+            }
+
+            if (p === 'granted') {
+                document.getElementById('permissionCard').style.display = 'none';
+            }
         }
 
         function updateCurrentTime() {
             const now = DateTime.now();
-            document.getElementById('currentTime').textContent = `🇰🇷 서울: ${now.setZone('Asia/Seoul').toFormat('HH:mm:ss')} | 🇺🇸 뉴욕: ${now.setZone('America/New_York').toFormat('HH:mm:ss')}`;
+            document.getElementById('currentTime').textContent = 
+                `🇰🇷 서울: ${now.setZone('Asia/Seoul').toFormat('HH:mm:ss')} | 🇺🇸 뉴욕: ${now.setZone('America/New_York').toFormat('HH:mm:ss')}`;
         }
 
         function updateKoreaPreview() {
@@ -135,13 +187,14 @@
 
         function renderAlarms() {
             const list = document.getElementById('alarmList');
-            list.innerHTML = alarms.map(a => `<div class="alarm-item"><div><b>${a.name}</b><br><small>${a.tz} ${a.hour}:${a.minute}</small></div><button class="btn" onclick="deleteAlarm(${a.id})">❌</button></div>`).join('');
+            if (alarms.length === 0) { list.innerHTML = '<p style="color:#999; text-align:center;">등록된 알람이 없습니다.</p>'; return; }
+            list.innerHTML = alarms.map(a => `<div class="alarm-item"><div><b>${a.name}</b><br><small>${a.tz} ${a.hour}:${a.minute}</small></div><button class="btn btn-danger" onclick="deleteAlarm(${a.id})" style="padding:5px 10px;">삭제</button></div>`).join('');
         }
 
         function deleteAlarm(id) { alarms = alarms.filter(a => a.id !== id); saveData(); renderAlarms(); }
+        function clearAllAlarms() { if(confirm('모든 알람을 삭제할까요?')) { alarms = []; saveData(); renderAlarms(); } }
 
-        setInterval(() => {
-            updateCurrentTime();
+        function checkAlarmsAndTimers() {
             const now = DateTime.now();
             const day = now.weekday % 7;
             const timeStr = now.setZone('Asia/Seoul').toFormat('HH:mm:ss');
@@ -152,35 +205,25 @@
                 if (timeStr === alarmKR) triggerAlarm(a.name);
             });
 
-            timers.forEach(t => { if (t.end <= Date.now() && !t.done) { t.done = true; triggerAlarm('타이머 종료'); } });
+            timers.forEach(t => {
+                if (t.end <= Date.now() && !t.done) { t.done = true; triggerAlarm('타이머 종료'); }
+            });
             timers = timers.filter(t => !t.done);
             renderTimers();
-        }, 1000);
+        }
 
-        // [핵심 수정] 소리와 메시지 동시 실행 로직
+        // [소리-메시지 동시 실행]
         function triggerAlarm(title) {
-            // 1. 소리 먼저 재생 시작
             playBeep();
-            
-            // 2. 진동 시작
             if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
 
-            // 3. 서비스 워커 알림 전송 (상단 바)
             if (Notification.permission === 'granted') {
                 navigator.serviceWorker.ready.then(reg => {
-                    reg.showNotification('⏰ ' + title, {
-                        body: '시간이 되었습니다!',
-                        vibrate: [200, 100, 200],
-                        tag: 'alarm-' + Date.now()
-                    });
+                    reg.showNotification('⏰ ' + title, { body: '설정하신 시간이 되었습니다!', vibrate: [200, 100, 200], tag: 'alarm' });
                 });
             }
-
-            // 4. 아주 짧은 지연(0.1초) 후 알림창 띄우기
-            // 이렇게 해야 소리가 먼저 터진 뒤에 알림창이 브라우저를 멈춥니다.
-            setTimeout(() => {
-                alert('⏰ 알람: ' + title);
-            }, 100);
+            // 소리가 날 시간을 준 뒤 메시지 표시
+            setTimeout(() => { alert('⏰ 알람: ' + title); }, 100);
         }
 
         function playBeep(silent = false) {
@@ -190,15 +233,14 @@
                 const gain = ctx.createGain();
                 osc.connect(gain); gain.connect(ctx.destination);
                 gain.gain.setValueAtTime(silent ? 0 : 0.5, ctx.currentTime);
-                // 소리 길이를 조금 늘림 (1.5초)
                 osc.start(); osc.stop(ctx.currentTime + 1.5);
             } catch(e) {}
         }
 
         function addTimer() {
-            const m = parseInt(document.getElementById('timerMin').value);
-            const s = parseInt(document.getElementById('timerSec').value);
-            timers.push({ name: '타이머 종료', end: Date.now() + (m*60+s)*1000, done: false });
+            const m = parseInt(document.getElementById('timerMin').value) || 0;
+            const s = parseInt(document.getElementById('timerSec').value) || 0;
+            if (m+s > 0) timers.push({ end: Date.now() + (m*60+s)*1000, done: false });
         }
 
         function renderTimers() {
@@ -211,12 +253,10 @@
             document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id.includes(t)));
         }
 
-        function saveData() { localStorage.setItem('world_alarms', JSON.stringify(alarms)); }
-        window.onload = () => {
-            const saved = localStorage.getItem('world_alarms');
-            if(saved) alarms = JSON.parse(saved);
-            renderAlarms(); updateKoreaPreview();
-        };
+        function saveData() { localStorage.setItem(ALARMS_KEY, JSON.stringify(alarms)); }
+        function loadAlarms() { const s = localStorage.getItem(ALARMS_KEY); if(s) { alarms = JSON.parse(s); renderAlarms(); } }
+
+        window.onload = init;
     </script>
 </body>
 </html>
