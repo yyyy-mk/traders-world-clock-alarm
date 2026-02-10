@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⏰ (트레이더용) 세계시간 알람 & 타이머 (Ver 0.5 - 최종 수정판) </title>
+    <title>⏰ (트레이더용) 세계시간 알람 & 타이머 (Ver 0.7 - 다양한 알람음 추가) </title>
     <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
     <style>
 
@@ -88,6 +88,20 @@
                     <button class="btn btn-secondary" onclick="setAllDays()">매일</button>
                 </div>
                 <div class="form-group"><label>알람 이름</label><input type="text" id="alarmName" placeholder="예: 미장 개장"></div>
+                <div class="form-group">
+                    <label>알람 소리</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="alarmSound" style="flex: 1;" onchange="saveAlarmSound()">
+                            <option value="beep">기본 비프음</option>
+                            <option value="chime">차임벨 (3음계)</option>
+                            <option value="bell">벨 소리 (하모닉)</option>
+                            <option value="digital">디지털 알람</option>
+                            <option value="gentle">부드러운 소리</option>
+                            <option value="urgent">긴급 알람</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="testSound()" style="padding: 10px 20px;">🔊 미리듣기</button>
+                    </div>
+                </div>
                 <button class="btn btn-primary" onclick="addAlarm()" style="width: 100%;">✓ 알람 저장</button>
             </div>
 
@@ -104,6 +118,39 @@
                     <button class="btn btn-secondary" onclick="addPresetAlarm('Asia/Hong_Kong', 16, 0, '홍콩 정규장 마감')">홍콩 정규장 마감 (HKT 16:00)</button>
                     <button class="btn btn-secondary" onclick="addPresetAlarm('Asia/Hong_Kong', 17, 15, '홍콩 야간선물')">홍콩 야간선물 (HKT 17:15)</button>
                     <button class="btn btn-secondary" onclick="addPresetAlarm('Asia/Hong_Kong', 1, 0, '홍콩 야간 마감')">홍콩 야간 마감 (HKT 01:00)</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🔊 알람 소리 안내</h2>
+                <div style="display: grid; gap: 10px;">
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 8px;">
+                        <b>🔔 기본 비프음</b><br>
+                        <small style="color: #666;">짧고 간단한 전자음 (0.5초)</small>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 8px;">
+                        <b>🎵 차임벨</b><br>
+                        <small style="color: #666;">3음계로 이루어진 부드러운 멜로디 (C-E-G)</small>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 8px;">
+                        <b>🔔 벨 소리</b><br>
+                        <small style="color: #666;">교회 종소리 같은 하모닉 울림</small>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 8px;">
+                        <b>⏰ 디지털 알람</b><br>
+                        <small style="color: #666;">전자시계 알람음 (삐-빕 3회 반복)</small>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 8px;">
+                        <b>🌅 부드러운 소리</b><br>
+                        <small style="color: #666;">점점 높아지는 잔잔한 소리 (아침용)</small>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 8px;">
+                        <b>🚨 긴급 알람</b><br>
+                        <small style="color: #666;">사이렌처럼 주의를 끄는 소리 (중요한 알람용)</small>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 8px; border: 1px solid #ffc107;">
+                    <small><b>💡 팁:</b> 위에서 알람 소리를 선택하고 "🔊 미리듣기" 버튼으로 소리를 확인해보세요!</small>
                 </div>
             </div>
 
@@ -136,25 +183,80 @@
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
 
         function init() {
-            loadAlarms(); updateCurrentTime(); setInterval(updateCurrentTime, 1000);
+            loadAlarms(); loadAlarmSound(); updateCurrentTime(); setInterval(updateCurrentTime, 1000);
             setInterval(checkLoop, 1000); updateKoreaPreview(); checkPerm();
         }
 
         function checkPerm() {
+            const isEdge = navigator.userAgent.includes('Edg');
+            const isFileProtocol = location.protocol === 'file:';
+            
             if (Notification.permission === 'granted') {
                 const c = document.getElementById('permissionCard');
                 c.className = 'status-ready';
                 document.getElementById('statusText').innerHTML = '<b>✅ 준비됨</b><br>알람 엔진을 시작해주세요.<br>📱모바일에서 시작 시 화면이 저절로 꺼지지 않습니다!🪫';
+            } else if (Notification.permission === 'denied') {
+                const c = document.getElementById('permissionCard');
+                c.className = 'status-warning';
+                document.getElementById('statusText').innerHTML = '<b>❌ 알림 차단됨</b><br>브라우저 설정에서 알림을 허용해주세요.<br>' + (isEdge ? '<b>⚠️ Edge 사용 중: 설정 &gt; 쿠키 및 사이트 권한 &gt; 알림</b>' : '주소창 자물쇠 아이콘 클릭');
+            } else if (isEdge && isFileProtocol) {
+                const c = document.getElementById('permissionCard');
+                c.className = 'status-warning';
+                document.getElementById('statusText').innerHTML = '<b>⚠️ Edge + 로컬 파일 감지</b><br>Edge는 로컬 파일에서 알림이 제한될 수 있습니다.<br><b>Chrome 사용 권장</b> 또는 웹서버로 실행';
             }
         }
 
         async function initMobileMode() {
-            const p = await Notification.requestPermission();
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            if (ctx.state === 'suspended') await ctx.resume();
-            playBeep(true); 
-            if ('wakeLock' in navigator) { try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {} }
-            if (p === 'granted') document.getElementById('permissionCard').style.display = 'none';
+            try {
+                // file:// 프로토콜 체크 (Edge는 로컬 파일에서 제한적)
+                if (location.protocol === 'file:') {
+                    alert('⚠️ Edge 브라우저 안내\n\n로컬 파일(file://)에서는 알림이 제한될 수 있습니다.\n\n해결 방법:\n1. Chrome 브라우저 사용 (권장)\n2. 또는 간이 서버로 실행:\n   - Python: python -m http.server 8000\n   - 그 후 http://localhost:8000 접속');
+                }
+
+                // Notification API 체크
+                if (!('Notification' in window)) {
+                    alert('❌ 이 브라우저는 알림을 지원하지 않습니다.\nChrome, Firefox, Safari를 사용해주세요.');
+                    return;
+                }
+
+                // 알림 권한 요청
+                const p = await Notification.requestPermission();
+                
+                if (p === 'denied') {
+                    alert('❌ 알림이 차단되었습니다!\n\n해결 방법:\n1. Edge 주소창 왼쪽 자물쇠 아이콘 클릭\n2. "알림" 찾아서 "허용"으로 변경\n3. 페이지 새로고침 후 다시 시도');
+                    return;
+                }
+
+                if (p === 'default') {
+                    alert('⚠️ 알림 권한을 선택하지 않았습니다.\n다시 버튼을 눌러주세요.');
+                    return;
+                }
+
+                // AudioContext 활성화
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                if (ctx.state === 'suspended') await ctx.resume();
+                playBeep(true); 
+
+                // Wake Lock (선택적)
+                if ('wakeLock' in navigator) { 
+                    try { 
+                        wakeLock = await navigator.wakeLock.request('screen'); 
+                        console.log('✅ Wake Lock 활성화');
+                    } catch(e) {
+                        console.log('⚠️ Wake Lock 실패 (무시 가능):', e);
+                    }
+                }
+
+                // 성공 처리
+                if (p === 'granted') {
+                    document.getElementById('permissionCard').style.display = 'none';
+                    alert('✅ 알람 엔진이 활성화되었습니다!\n\n⚠️ 중요:\n- 이 탭을 닫으면 알람이 작동하지 않습니다\n- 최소화는 괜찮습니다');
+                }
+
+            } catch(e) {
+                alert('❌ 오류 발생!\n\n' + e.message + '\n\n브라우저: ' + navigator.userAgent.includes('Edg') ? 'Edge' : 'Other' + '\n\n해결책:\n1. Chrome 브라우저 사용\n2. 또는 브라우저 설정에서 알림 허용');
+                console.error('initMobileMode 에러:', e);
+            }
         }
 
         function updateCurrentTime() {
@@ -232,13 +334,136 @@
         }
 
         function playBeep(s = false) {
+            const soundType = localStorage.getItem('alarmSound') || 'beep';
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const o = ctx.createOscillator(); const g = ctx.createGain();
+                
+                if (s) {
+                    // 무음 테스트
+                    const o = ctx.createOscillator(); const g = ctx.createGain();
+                    o.connect(g); g.connect(ctx.destination);
+                    g.gain.setValueAtTime(0, ctx.currentTime);
+                    o.start(); o.stop(ctx.currentTime + 0.1);
+                    return;
+                }
+                
+                switch(soundType) {
+                    case 'beep':
+                        playBeepSound(ctx);
+                        break;
+                    case 'chime':
+                        playChimeSound(ctx);
+                        break;
+                    case 'bell':
+                        playBellSound(ctx);
+                        break;
+                    case 'digital':
+                        playDigitalSound(ctx);
+                        break;
+                    case 'gentle':
+                        playGentleSound(ctx);
+                        break;
+                    case 'urgent':
+                        playUrgentSound(ctx);
+                        break;
+                    default:
+                        playBeepSound(ctx);
+                }
+            } catch(e) { console.error('Sound error:', e); }
+        }
+        
+        // 1. 기본 비프음
+        function playBeepSound(ctx) {
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.connect(g); g.connect(ctx.destination);
+            o.frequency.value = 800;
+            g.gain.setValueAtTime(0.3, ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+            o.start(); o.stop(ctx.currentTime + 0.5);
+        }
+        
+        // 2. 차임벨 (3음계)
+        function playChimeSound(ctx) {
+            const notes = [523.25, 659.25, 783.99]; // C, E, G
+            notes.forEach((freq, i) => {
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
                 o.connect(g); g.connect(ctx.destination);
-                g.gain.setValueAtTime(s ? 0 : 0.5, ctx.currentTime);
-                o.start(); o.stop(ctx.currentTime + 1.5);
-            } catch(e) {}
+                o.frequency.value = freq;
+                o.type = 'sine';
+                const startTime = ctx.currentTime + (i * 0.3);
+                g.gain.setValueAtTime(0.4, startTime);
+                g.gain.exponentialRampToValueAtTime(0.01, startTime + 0.6);
+                o.start(startTime);
+                o.stop(startTime + 0.6);
+            });
+        }
+        
+        // 3. 벨 소리 (하모닉)
+        function playBellSound(ctx) {
+            const fundamental = 440;
+            const harmonics = [1, 2, 3, 4.2, 5.4];
+            harmonics.forEach((ratio, i) => {
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.connect(g); g.connect(ctx.destination);
+                o.frequency.value = fundamental * ratio;
+                o.type = 'sine';
+                g.gain.setValueAtTime(0.3 / (i + 1), ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.5);
+                o.start();
+                o.stop(ctx.currentTime + 1.5);
+            });
+        }
+        
+        // 4. 디지털 알람 (2음 반복)
+        function playDigitalSound(ctx) {
+            for(let i = 0; i < 3; i++) {
+                [880, 988].forEach((freq, j) => {
+                    const o = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    o.connect(g); g.connect(ctx.destination);
+                    o.frequency.value = freq;
+                    o.type = 'square';
+                    const startTime = ctx.currentTime + (i * 0.4) + (j * 0.2);
+                    g.gain.setValueAtTime(0.2, startTime);
+                    g.gain.setValueAtTime(0, startTime + 0.15);
+                    o.start(startTime);
+                    o.stop(startTime + 0.15);
+                });
+            }
+        }
+        
+        // 5. 부드러운 소리 (상승)
+        function playGentleSound(ctx) {
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.connect(g); g.connect(ctx.destination);
+            o.type = 'sine';
+            o.frequency.setValueAtTime(400, ctx.currentTime);
+            o.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.5);
+            g.gain.setValueAtTime(0.3, ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1);
+            o.start();
+            o.stop(ctx.currentTime + 1);
+        }
+        
+        // 6. 긴급 알람 (사이렌)
+        function playUrgentSound(ctx) {
+            for(let i = 0; i < 4; i++) {
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.connect(g); g.connect(ctx.destination);
+                o.type = 'sawtooth';
+                const startTime = ctx.currentTime + (i * 0.3);
+                o.frequency.setValueAtTime(600, startTime);
+                o.frequency.exponentialRampToValueAtTime(900, startTime + 0.15);
+                g.gain.setValueAtTime(0.3, startTime);
+                g.gain.setValueAtTime(0, startTime + 0.2);
+                o.start(startTime);
+                o.stop(startTime + 0.2);
+            }
         }
 
         function addTimer() {
@@ -269,6 +494,21 @@
 
         function saveData() { localStorage.setItem('world_alarms_v2', JSON.stringify(alarms)); }
         function loadAlarms() { const s = localStorage.getItem('world_alarms_v2'); if(s) { alarms = JSON.parse(s); renderAlarms(); } }
+        
+        function saveAlarmSound() {
+            const sound = document.getElementById('alarmSound').value;
+            localStorage.setItem('alarmSound', sound);
+        }
+        
+        function loadAlarmSound() {
+            const saved = localStorage.getItem('alarmSound') || 'beep';
+            document.getElementById('alarmSound').value = saved;
+        }
+        
+        function testSound() {
+            playBeep(false);
+        }
+        
         window.onload = init;
     </script>
 </body>
