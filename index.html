@@ -120,6 +120,12 @@
                     <button class="btn btn-secondary" onclick="addPresetAlarm('Asia/Hong_Kong', 1, 0, '홍콩 야간 마감')">홍콩 야간 마감 (HKT 01:00)</button>
                 </div>
             </div>
+            <div class="card">
+                <h2>📋 등록된 알람</h2>
+                <div id="alarmList"></div>
+                <button class="btn btn-danger" onclick="clearAllAlarms()" style="margin-top:10px; font-size:0.8em;">🗑️ 전체 삭제</button>
+            </div>
+        </div>
 
             <div class="card">
                 <h2>🔊 알람 소리 안내</h2>
@@ -154,12 +160,6 @@
                 </div>
             </div>
 
-            <div class="card">
-                <h2>📋 등록된 알람</h2>
-                <div id="alarmList"></div>
-                <button class="btn btn-danger" onclick="clearAllAlarms()" style="margin-top:10px; font-size:0.8em;">🗑️ 전체 삭제</button>
-            </div>
-        </div>
 
         <div id="timers-tab" class="tab-content">
             <div class="card">
