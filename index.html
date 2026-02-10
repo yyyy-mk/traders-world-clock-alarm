@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⏰ 세계시간 알람 & 타이머 (for 무경) </title>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .current-time {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            color: white;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 1.1em;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab-button:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .tab-button.active {
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .time-input {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .time-input input {
+            width: 80px;
+            text-align: center;
+        }
+
+        .preview {
+            color: #667eea;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .days-selector {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .day-checkbox {
+            display: none;
+        }
+
+        .day-label {
+            padding: 10px 20px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            user-select: none;
+        }
+
+        .day-checkbox:checked + .day-label {
+            background: #667eea;
+            color: white;
+        }
+
+        .quick-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ee5a52;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .alarm-list,
+        .timer-list {
+            margin-top: 20px;
+        }
+
+        .alarm-item,
+        .timer-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .alarm-item:hover,
+        .timer-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .alarm-info {
+            flex: 1;
+        }
+
+        .alarm-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .alarm-details {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .sound-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .sound-selector select {
+            flex: 1;
+        }
+
+        .timer-controls {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .notification-permission {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .notification-permission button {
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .preset-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .timer-controls {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .time-input {
+                flex-direction: column;
+            }
+
+            .time-input input {
+                width: 100%;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .countdown {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⏰ 세계시간 알람 & 타이머</h1>
+            <p>썸머타임 자동 적용 | 브라우저 기반</p>
+        </div>
+
+        <div class="current-time" id="currentTime">
+            🇰🇷 한국: -- | 🇺🇸 뉴욕: --
+        </div>
+
+        <div id="notificationPermission" class="notification-permission" style="display: none;">
+            ⚠️ 알람과 타이머 알림을 받으려면 브라우저 알림 권한이 필요합니다.
+            <br>
+            <button class="btn btn-primary" onclick="requestNotificationPermission()">알림 권한 허용</button>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('alarms')">⏰ 세계시간 알람</button>
+            <button class="tab-button" onclick="switchTab('timers')">⏱️ 타이머</button>
+        </div>
+
+        <!-- 알람 탭 -->
+        <div id="alarms-tab" class="tab-content active">
+            <div class="card">
+                <h2>📍 새 알람 추가</h2>
+                
+                <div class="form-group">
+                    <label>타임존</label>
+                    <select id="alarmTimezone" onchange="updateKoreaPreview()">
+                        <option value="America/New_York">US/Eastern (뉴욕) - 미장</option>
+                        <option value="America/Chicago">US/Central (시카고) - CME</option>
+                        <option value="America/Los_Angeles">US/Pacific (LA)</option>
+                        <option value="Europe/London">Europe/London (런던)</option>
+                        <option value="Europe/Paris">Europe/Paris (프랑크푸르트)</option>
+                        <option value="Asia/Tokyo">Asia/Tokyo (도쿄)</option>
+                        <option value="Asia/Shanghai">Asia/Shanghai (상하이)</option>
+                        <option value="Asia/Hong_Kong">Asia/Hong_Kong (홍콩)</option>
+                        <option value="Asia/Seoul">Asia/Seoul (서울)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>시간 (24시간 형식)</label>
+                    <div class="time-input">
+                        <input type="number" id="alarmHour" min="0" max="23" value="9" onchange="updateKoreaPreview()">
+                        <span>시</span>
+                        <input type="number" id="alarmMinute" min="0" max="59" value="30" onchange="updateKoreaPreview()">
+                        <span>분</span>
+                    </div>
+                    <div class="preview" id="koreaPreview"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>알람 이름</label>
+                    <input type="text" id="alarmName" placeholder="예: 미장 개장" value="미장 개장">
+                </div>
+
+                <div class="form-group">
+                    <label>요일 선택</label>
+                    <div class="days-selector">
+                        <input type="checkbox" id="day0" class="day-checkbox" checked>
+                        <label for="day0" class="day-label">월</label>
+                        
+                        <input type="checkbox" id="day1" class="day-checkbox" checked>
+                        <label for="day1" class="day-label">화</label>
+                        
+                        <input type="checkbox" id="day2" class="day-checkbox" checked>
+                        <label for="day2" class="day-label">수</label>
+                        
+                        <input type="checkbox" id="day3" class="day-checkbox" checked>
+                        <label for="day3" class="day-label">목</label>
+                        
+                        <input type="checkbox" id="day4" class="day-checkbox" checked>
+                        <label for="day4" class="day-label">금</label>
+                        
+                        <input type="checkbox" id="day5" class="day-checkbox">
+                        <label for="day5" class="day-label">토</label>
+                        
+                        <input type="checkbox" id="day6" class="day-checkbox">
+                        <label for="day6" class="day-label">일</label>
+                    </div>
+                    <div class="quick-buttons">
+                        <button class="btn btn-secondary btn-small" onclick="setWeekdays()">평일만</button>
+                        <button class="btn btn-secondary btn-small" onclick="setAllDays()">매일</button>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="addAlarm()" style="width: 100%; margin-top: 10px;">
+                    ✓ 알람 추가
+                </button>
+            </div>
+
+            <div class="card">
+                <h2>⚡ 빠른 설정</h2>
+                <div class="preset-grid">
+                    <button class="btn btn-secondary btn-small" onclick="addPresetAlarm('America/New_York', 4, 0, '미장 프리마켓')">미장 프리마켓 (04:00)</button>
+                    <button class="btn btn-secondary btn-small" onclick="addPresetAlarm('America/New_York', 9, 30, '미장 개장')">미장 개장 (09:30)</button>
+                    <button class="btn btn-secondary btn-small" onclick="addPresetAlarm('America/New_York', 16, 0, '미장 마감')">미장 마감 (16:00)</button>
+                    <button class="btn btn-secondary btn-small" onclick="addPresetAlarm('Europe/London', 8, 0, '런던 개장')">런던 개장 (08:00)</button>
+                    <button class="btn btn-secondary btn-small" onclick="addPresetAlarm('Asia/Hong_Kong', 9, 30, '홍콩 오전장')">홍콩 오전장 (09:30)</button>
+                    <button class="btn btn-secondary btn-small" onclick="addPresetAlarm('Asia/Hong_Kong', 12, 0, '홍콩 점심시간')">홍콩 점심시간 (12:00)</button>
+                    <button class="btn btn-secondary btn-small" onclick="addPresetAlarm('Asia/Hong_Kong', 13, 0, '홍콩 오후장')">홍콩 오후장 (13:00)</button>
+                    <button class="btn btn-secondary btn-small" onclick="addPresetAlarm('Asia/Hong_Kong', 16, 0, '홍콩 정규장 마감')">홍콩 정규장 마감 (16:00)</button>
+                    <button class="btn btn-secondary btn-small" onclick="addPresetAlarm('Asia/Hong_Kong', 17, 15, '홍콩 야간선물')">홍콩 야간선물 (17:15)</button>
+                    <button class="btn btn-secondary btn-small" onclick="addPresetAlarm('Asia/Hong_Kong', 1, 0, '홍콩 야간 마감')">홍콩 야간 마감 (01:00)</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📋 등록된 알람</h2>
+                <div id="alarmList" class="alarm-list">
+                    <div class="empty-state">등록된 알람이 없습니다.</div>
+                </div>
+                <button class="btn btn-danger btn-small" onclick="clearAllAlarms()" style="margin-top: 10px;">
+                    🗑️ 전체 삭제
+                </button>
+            </div>
+        </div>
+
+        <!-- 타이머 탭 -->
+        <div id="timers-tab" class="tab-content">
+            <div class="card">
+                <h2>⏱️ 새 타이머 설정</h2>
+                
+                <div class="form-group">
+                    <label>타이머 이름 (선택)</label>
+                    <input type="text" id="timerName" placeholder="예: 차트 체크">
+                </div>
+
+                <div class="form-group">
+                    <label>시간 설정</label>
+                    <div class="time-input">
+                        <input type="number" id="timerHour" min="0" max="23" value="0">
+                        <span>시간</span>
+                        <input type="number" id="timerMinute" min="0" max="59" value="5">
+                        <span>분</span>
+                        <input type="number" id="timerSecond" min="0" max="59" value="0">
+                        <span>초</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>빠른 설정</label>
+                    <div class="timer-controls">
+                        <button class="btn btn-secondary btn-small" onclick="setTimer(0,1,0)">1분</button>
+                        <button class="btn btn-secondary btn-small" onclick="setTimer(0,3,0)">3분</button>
+                        <button class="btn btn-secondary btn-small" onclick="setTimer(0,5,0)">5분</button>
+                        <button class="btn btn-secondary btn-small" onclick="setTimer(0,10,0)">10분</button>
+                        <button class="btn btn-secondary btn-small" onclick="setTimer(0,15,0)">15분</button>
+                        <button class="btn btn-secondary btn-small" onclick="setTimer(0,30,0)">30분</button>
+                        <button class="btn btn-secondary btn-small" onclick="setTimer(0,45,0)">45분</button>
+                        <button class="btn btn-secondary btn-small" onclick="setTimer(1,0,0)">1시간</button>
+                        <button class="btn btn-secondary btn-small" onclick="setTimer(2,0,0)">2시간</button>
+                        <button class="btn btn-secondary btn-small" onclick="setTimer(4,0,0)">4시간</button>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="startTimer()" style="width: 100%; margin-top: 10px;">
+                    ▶ 타이머 시작
+                </button>
+            </div>
+
+            <div class="card">
+                <h2>🏃 실행 중인 타이머</h2>
+                <div id="timerList" class="timer-list">
+                    <div class="empty-state">실행 중인 타이머가 없습니다.</div>
+                </div>
+                <button class="btn btn-danger btn-small" onclick="stopAllTimers()" style="margin-top: 10px;">
+                    ⏹️ 전체 정지
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { DateTime } = luxon;
+        
+        // 데이터
+        let alarms = [];
+        let timers = [];
+        
+        // 로컬 스토리지 키
+        const ALARMS_KEY = 'world_time_alarms';
+        
+        // 초기화
+        function init() {
+            loadAlarms();
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+            setInterval(checkAlarms, 1000);
+            setInterval(updateTimers, 500);
+            updateKoreaPreview();
+            checkNotificationPermission();
+        }
+        
+        // 알림 권한 체크
+        function checkNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                document.getElementById('notificationPermission').style.display = 'block';
+            }
+        }
+        
+        // 알림 권한 요청
+        function requestNotificationPermission() {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    document.getElementById('notificationPermission').style.display = 'none';
+                    alert('알림 권한이 허용되었습니다! 🎉');
+                }
+            });
+        }
+        
+        // 탭 전환
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tab + '-tab').classList.add('active');
+        }
+        
+        // 현재 시간 업데이트
+        function updateCurrentTime() {
+            const korea = DateTime.now().setZone('Asia/Seoul');
+            const newYork = DateTime.now().setZone('America/New_York');
+            
+            document.getElementById('currentTime').textContent = 
+                `🇰🇷 한국: ${korea.toFormat('yyyy-MM-dd HH:mm:ss')} | 🇺🇸 뉴욕: ${newYork.toFormat('yyyy-MM-dd HH:mm:ss')}`;
+        }
+        
+        // 한국시간 미리보기 업데이트
+        function updateKoreaPreview() {
+            const timezone = document.getElementById('alarmTimezone').value;
+            const hour = parseInt(document.getElementById('alarmHour').value) || 0;
+            const minute = parseInt(document.getElementById('alarmMinute').value) || 0;
+            
+            try {
+                const dt = DateTime.now().setZone(timezone).set({ hour, minute });
+                const koreaTime = dt.setZone('Asia/Seoul');
+                
+                document.getElementById('koreaPreview').textContent = 
+                    `→ 한국시간: ${koreaTime.toFormat('HH:mm')}`;
+            } catch (e) {
+                document.getElementById('koreaPreview').textContent = '';
+            }
+        }
+        
+        // 요일 설정
+        function setWeekdays() {
+            for (let i = 0; i < 7; i++) {
+                document.getElementById('day' + i).checked = i < 5;
+            }
+        }
+        
+        function setAllDays() {
+            for (let i = 0; i < 7; i++) {
+                document.getElementById('day' + i).checked = true;
+            }
+        }
+        
+        // 알람 추가
+        function addAlarm() {
+            const timezone = document.getElementById('alarmTimezone').value;
+            const hour = parseInt(document.getElementById('alarmHour').value);
+            const minute = parseInt(document.getElementById('alarmMinute').value);
+            const name = document.getElementById('alarmName').value.trim();
+            
+            if (!name) {
+                alert('알람 이름을 입력하세요.');
+                return;
+            }
+            
+            const days = [];
+            for (let i = 0; i < 7; i++) {
+                if (document.getElementById('day' + i).checked) {
+                    days.push(i);
+                }
+            }
+            
+            if (days.length === 0) {
+                alert('최소 하나의 요일을 선택하세요.');
+                return;
+            }
+            
+            const alarm = {
+                id: Date.now(),
+                timezone,
+                hour,
+                minute,
+                name,
+                days,
+                enabled: true
+            };
+            
+            alarms.push(alarm);
+            saveAlarms();
+            updateAlarmList();
+            alert(`알람이 추가되었습니다: ${name}`);
+        }
+        
+        // 프리셋 알람 추가
+        function addPresetAlarm(timezone, hour, minute, name) {
+            const alarm = {
+                id: Date.now(),
+                timezone,
+                hour,
+                minute,
+                name,
+                days: [0, 1, 2, 3, 4], // 평일
+                enabled: true
+            };
+            
+            alarms.push(alarm);
+            saveAlarms();
+            updateAlarmList();
+            alert(`"${name}" 알람이 추가되었습니다!`);
+        }
+        
+        // 알람 삭제
+        function deleteAlarm(id) {
+            if (confirm('이 알람을 삭제하시겠습니까?')) {
+                alarms = alarms.filter(a => a.id !== id);
+                saveAlarms();
+                updateAlarmList();
+            }
+        }
+        
+        // 전체 알람 삭제
+        function clearAllAlarms() {
+            if (alarms.length === 0) {
+                alert('삭제할 알람이 없습니다.');
+                return;
+            }
+            
+            if (confirm('모든 알람을 삭제하시겠습니까?')) {
+                alarms = [];
+                saveAlarms();
+                updateAlarmList();
+            }
+        }
+        
+        // 알람 리스트 업데이트
+        function updateAlarmList() {
+            const listEl = document.getElementById('alarmList');
+            
+            if (alarms.length === 0) {
+                listEl.innerHTML = '<div class="empty-state">등록된 알람이 없습니다.</div>';
+                return;
+            }
+            
+            listEl.innerHTML = alarms.map(alarm => {
+                const dt = DateTime.now().setZone(alarm.timezone).set({ 
+                    hour: alarm.hour, 
+                    minute: alarm.minute 
+                });
+                const koreaTime = dt.setZone('Asia/Seoul');
+                const daysStr = formatDays(alarm.days);
+                
+                return `
+                    <div class="alarm-item">
+                        <div class="alarm-info">
+                            <div class="alarm-name">${alarm.name}</div>
+                            <div class="alarm-details">
+                                ${alarm.timezone} ${String(alarm.hour).padStart(2, '0')}:${String(alarm.minute).padStart(2, '0')} 
+                                → 한국 ${koreaTime.toFormat('HH:mm')} | ${daysStr}
+                            </div>
+                        </div>
+                        <button class="btn btn-danger btn-small" onclick="deleteAlarm(${alarm.id})">
+                            🗑️ 삭제
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // 요일 포맷팅
+        function formatDays(days) {
+            const dayNames = ['월', '화', '수', '목', '금', '토', '일'];
+            if (days.length === 7) return '매일';
+            if (days.length === 5 && days.every(d => d < 5)) return '평일';
+            if (days.length === 2 && days.includes(5) && days.includes(6)) return '주말';
+            return days.map(d => dayNames[d]).join(', ');
+        }
+        
+        // 알람 체크
+        function checkAlarms() {
+            const now = DateTime.now().setZone('Asia/Seoul');
+            const currentDay = (now.weekday % 7); // luxon의 weekday는 1(월)~7(일)
+            const currentMinute = now.toFormat('HH:mm');
+            
+            alarms.forEach(alarm => {
+                if (!alarm.enabled || !alarm.days.includes(currentDay)) return;
+                
+                const dt = DateTime.now().setZone(alarm.timezone).set({
+                    hour: alarm.hour,
+                    minute: alarm.minute
+                });
+                const alarmTimeKR = dt.setZone('Asia/Seoul');
+                const alarmMinute = alarmTimeKR.toFormat('HH:mm');
+                
+                if (currentMinute === alarmMinute) {
+                    if (!alarm.lastTriggered || now.diff(alarm.lastTriggered, 'minutes').minutes >= 1) {
+                        triggerAlarm(alarm);
+                        alarm.lastTriggered = now;
+                    }
+                }
+            });
+        }
+        
+        // 알람 트리거
+        function triggerAlarm(alarm) {
+            console.log('⏰ 알람:', alarm.name);
+            
+            // 브라우저 알림
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('⏰ 알람', {
+                    body: `${alarm.name}\n${alarm.timezone} ${String(alarm.hour).padStart(2, '0')}:${String(alarm.minute).padStart(2, '0')}`,
+                    icon: '⏰',
+                    tag: 'alarm-' + alarm.id
+                });
+            }
+            
+            // 소리
+            playBeep();
+            
+            // 알림창
+            alert(`⏰ 알람\n\n${alarm.name}\n\n설정시간: ${alarm.timezone} ${String(alarm.hour).padStart(2, '0')}:${String(alarm.minute).padStart(2, '0')}\n현재시간: ${DateTime.now().toFormat('yyyy-MM-dd HH:mm:ss')}`);
+        }
+        
+        // 타이머 설정
+        function setTimer(h, m, s) {
+            document.getElementById('timerHour').value = h;
+            document.getElementById('timerMinute').value = m;
+            document.getElementById('timerSecond').value = s;
+        }
+        
+        // 타이머 시작
+        function startTimer() {
+            const hours = parseInt(document.getElementById('timerHour').value) || 0;
+            const minutes = parseInt(document.getElementById('timerMinute').value) || 0;
+            const seconds = parseInt(document.getElementById('timerSecond').value) || 0;
+            
+            const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+            
+            if (totalSeconds <= 0) {
+                alert('타이머 시간을 0보다 크게 설정하세요.');
+                return;
+            }
+            
+            let name = document.getElementById('timerName').value.trim();
+            if (!name) {
+                name = `${hours}시간 ${minutes}분 ${seconds}초`;
+            }
+            
+            const timer = {
+                id: Date.now(),
+                name,
+                endTime: Date.now() + (totalSeconds * 1000),
+                totalSeconds,
+                active: true
+            };
+            
+            timers.push(timer);
+            updateTimerList();
+            
+            // 입력 초기화
+            document.getElementById('timerName').value = '';
+        }
+        
+        // 타이머 정지
+        function stopTimer(id) {
+            const timer = timers.find(t => t.id === id);
+            if (timer) {
+                timer.active = false;
+                updateTimerList();
+            }
+        }
+        
+        // 전체 타이머 정지
+        function stopAllTimers() {
+            if (timers.filter(t => t.active).length === 0) {
+                alert('실행 중인 타이머가 없습니다.');
+                return;
+            }
+            
+            if (confirm('모든 타이머를 정지하시겠습니까?')) {
+                timers.forEach(t => t.active = false);
+                updateTimerList();
+            }
+        }
+        
+        // 타이머 리스트 업데이트
+        function updateTimers() {
+            const now = Date.now();
+            
+            timers.forEach(timer => {
+                if (!timer.active) return;
+                
+                const remaining = timer.endTime - now;
+                
+                if (remaining <= 0) {
+                    timer.active = false;
+                    triggerTimer(timer);
+                }
+            });
+            
+            // 비활성 타이머 제거
+            timers = timers.filter(t => t.active);
+            
+            updateTimerList();
+        }
+        
+        // 타이머 리스트 표시
+        function updateTimerList() {
+            const listEl = document.getElementById('timerList');
+            const activeTimers = timers.filter(t => t.active);
+            
+            if (activeTimers.length === 0) {
+                listEl.innerHTML = '<div class="empty-state">실행 중인 타이머가 없습니다.</div>';
+                return;
+            }
+            
+            listEl.innerHTML = activeTimers.map(timer => {
+                const now = Date.now();
+                const remaining = Math.max(0, timer.endTime - now);
+                const hours = Math.floor(remaining / 3600000);
+                const minutes = Math.floor((remaining % 3600000) / 60000);
+                const seconds = Math.floor((remaining % 60000) / 1000);
+                
+                return `
+                    <div class="timer-item">
+                        <div class="alarm-info">
+                            <div class="alarm-name">${timer.name}</div>
+                            <div class="countdown">
+                                남은시간: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}
+                            </div>
+                        </div>
+                        <button class="btn btn-danger btn-small" onclick="stopTimer(${timer.id})">
+                            ⏹️ 정지
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // 타이머 트리거
+        function triggerTimer(timer) {
+            console.log('⏱️ 타이머 완료:', timer.name);
+            
+            // 브라우저 알림
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('⏱️ 타이머 완료', {
+                    body: `${timer.name}\n타이머가 종료되었습니다!`,
+                    icon: '⏱️',
+                    tag: 'timer-' + timer.id
+                });
+            }
+            
+            // 소리
+            playBeep();
+            
+            // 알림창
+            alert(`⏱️ 타이머 완료\n\n${timer.name}\n\n타이머가 종료되었습니다!`);
+        }
+        
+        // 비프음 재생
+        function playBeep() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+        
+        // 로컬 스토리지 저장
+        function saveAlarms() {
+            localStorage.setItem(ALARMS_KEY, JSON.stringify(alarms));
+        }
+        
+        // 로컬 스토리지 로드
+        function loadAlarms() {
+            const saved = localStorage.getItem(ALARMS_KEY);
+            if (saved) {
+                try {
+                    alarms = JSON.parse(saved);
+                    updateAlarmList();
+                } catch (e) {
+                    console.error('알람 로드 실패:', e);
+                }
+            }
+        }
+        
+        // 페이지 로드 시 초기화
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
